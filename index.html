@@ -1,0 +1,892 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Beam Designer</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172033;
+      --muted: #64748b;
+      --line: #dce5ef;
+      --surface: #fff;
+      --canvas: #f3f6fa;
+      --blue: #2563eb;
+      --blue-soft: #eff6ff;
+      --green: #16834b;
+      --green-soft: #eaf7ef;
+      --amber: #a85b08;
+      --amber-soft: #fff5e8;
+      --shadow: 0 5px 20px rgba(23, 42, 69, .055);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font: 14px/1.45 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+
+    .topbar {
+      height: 66px;
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand { display: flex; align-items: center; gap: 11px; }
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: var(--blue);
+      border-radius: 9px;
+    }
+    .brand h1 { margin: 0; font-size: 17px; letter-spacing: -.02em; }
+    .topbar-note { color: var(--muted); font-size: 12px; }
+
+    .app-layout {
+      display: grid;
+      grid-template-columns: 350px minmax(0, 1fr);
+      min-height: calc(100vh - 66px);
+    }
+
+    .inputs {
+      padding: 22px 18px 30px;
+      background: var(--surface);
+      border-right: 1px solid var(--line);
+    }
+
+    .workspace { min-width: 0; padding: 24px; }
+    .intro { margin: 0 0 20px; }
+    .intro h2 { margin: 0 0 4px; font-size: 20px; letter-spacing: -.03em; }
+    .intro p { margin: 0; color: var(--muted); font-size: 13px; }
+
+    .panel-section { margin: 0 0 22px; }
+    .section-heading {
+      margin: 0 0 11px;
+      color: #59677a;
+      font-size: 11px;
+      font-weight: 750;
+      letter-spacing: .075em;
+      text-transform: uppercase;
+    }
+
+    .support-options { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .support-option {
+      min-height: 39px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 9px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: #526074;
+      font-size: 12px;
+    }
+    .support-option.selected {
+      border-color: #9dbcf2;
+      color: #194faf;
+      background: var(--blue-soft);
+      font-weight: 650;
+    }
+    .support-option input { margin: 0; accent-color: var(--blue); }
+
+    .field-label, .load-field label {
+      display: block;
+      margin: 0 0 5px;
+      color: #475569;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .number-control, .select-control {
+      width: 100%;
+      min-width: 0;
+      height: 37px;
+      padding: 7px 9px;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      outline: none;
+      color: var(--ink);
+      background: #fff;
+    }
+    .input-unit { position: relative; }
+    .input-unit .number-control { padding-right: 51px; }
+    .input-unit .unit {
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      transform: translateY(-50%);
+      color: #7b8797;
+      font-size: 11px;
+      pointer-events: none;
+    }
+    .span-controls { display: grid; grid-template-columns: 1fr 92px; gap: 10px; align-items: center; }
+    .span-controls input[type="range"] { width: 100%; margin: 0; accent-color: var(--blue); }
+    .hint { margin-top: 5px; color: #8290a1; font-size: 10px; }
+
+    .load-card {
+      margin: 0 0 9px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: #fcfdff;
+    }
+    .load-list { display: grid; gap: 1px; }
+    .load-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+    .load-name { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; }
+    .load-tag {
+      padding: 2px 6px;
+      border-radius: 999px;
+      color: #566579;
+      background: #edf1f6;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .icon-button {
+      width: 26px;
+      height: 26px;
+      border: 0;
+      border-radius: 6px;
+      color: #728095;
+      background: transparent;
+      font-size: 16px;
+    }
+    .load-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .load-fields.three { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+    .load-field { min-width: 0; }
+    .load-field label { font-size: 10px; }
+    .load-field .number-control { height: 34px; padding: 6px 7px; font-size: 12px; }
+    .load-fields.three .input-unit .number-control { padding-right: 35px; }
+    .load-fields.three .input-unit .unit { right: 6px; font-size: 9px; }
+    .add-loads { display: flex; gap: 7px; margin-top: 8px; }
+    .secondary-button {
+      min-height: 35px;
+      flex: 1;
+      border: 1px solid #cbd8e8;
+      border-radius: 7px;
+      color: #315d9f;
+      background: #fff;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .select-row { display: grid; grid-template-columns: 1fr 1.1fr; gap: 8px; }
+    .mode-row { display: flex; gap: 16px; margin-top: 10px; }
+    .mode-row label { display: flex; align-items: center; gap: 6px; color: #566579; font-size: 11px; }
+    .mode-row input { margin: 0; accent-color: var(--blue); }
+    .limit-control { max-width: 120px; }
+    .waste-control { margin-top: 13px; }
+    .waste-control-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .waste-control-head label { color: #475569; font-size: 11px; font-weight: 600; }
+    .waste-value { min-width: 42px; padding: 3px 7px; border-radius: 6px; color: #194faf; background: var(--blue-soft); text-align: center; font-size: 11px; font-weight: 750; }
+    .waste-slider { display: block; width: 100%; margin: 9px 0 2px; accent-color: var(--blue); }
+    .range-ends { display: flex; justify-content: space-between; color: #8290a1; font-size: 9px; }
+
+    .workspace-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 17px;
+    }
+    .workspace-heading h2 { margin: 0 0 4px; font-size: 18px; letter-spacing: -.02em; }
+    .workspace-heading p { margin: 0; color: var(--muted); font-size: 12px; }
+    .example-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 9px;
+      border: 1px solid #ccebd8;
+      border-radius: 999px;
+      color: var(--green);
+      background: var(--green-soft);
+      white-space: nowrap;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .surface-card {
+      overflow: hidden;
+      border: 1px solid #e3eaf2;
+      border-radius: 12px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .beam-card { padding: 15px 18px 4px; }
+    .card-label {
+      margin: 0 0 6px;
+      color: #657387;
+      font-size: 10px;
+      font-weight: 750;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+    svg { display: block; width: 100%; height: auto; }
+    .diagram-stack { padding: 3px 18px 10px; }
+    .diagram { border-top: 1px solid #edf1f6; }
+    .summary-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 9px;
+      margin: 13px 0;
+    }
+    .summary-item { padding: 11px 12px; }
+    .summary-item .label { color: var(--muted); font-size: 10px; }
+    .summary-item .value { margin-top: 4px; font-size: 16px; font-weight: 700; letter-spacing: -.02em; }
+    .summary-item .unit { color: #64748b; font-size: 10px; font-weight: 500; }
+    .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .check-card { padding: 15px 16px; }
+    .check-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .check-head h3 { margin: 0; font-size: 13px; }
+    .pass-badge {
+      padding: 4px 8px;
+      border-radius: 999px;
+      color: #187647;
+      background: var(--green-soft);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .04em;
+    }
+    .check-equation { margin: 7px 0 12px; color: #738095; font-size: 10px; }
+    .check-values { display: flex; justify-content: space-between; gap: 10px; color: #59677a; font-size: 11px; }
+    .check-values strong { color: var(--ink); font-size: 12px; }
+    .meter { height: 7px; margin-top: 8px; overflow: hidden; border-radius: 999px; background: #edf1f5; }
+    .meter-fill { width: 59.9%; height: 100%; border-radius: inherit; background: #32a46a; }
+    .deflection-fill { width: 91.3%; background: #e3a23b; }
+    .recommendation {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-top: 12px;
+      padding: 13px 15px;
+      border: 1px solid #d5e5fb;
+      border-radius: 10px;
+      background: #f4f8ff;
+    }
+    .recommendation-copy { min-width: 0; }
+    .recommendation-copy .eyebrow { color: #6480a6; font-size: 9px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+    .recommendation-copy strong { display: block; margin-top: 3px; font-size: 13px; }
+    .recommendation-copy span { color: #66758a; font-size: 10px; }
+    .primary-button {
+      min-height: 35px;
+      padding: 7px 12px;
+      border: 0;
+      border-radius: 7px;
+      color: #fff;
+      background: var(--blue);
+      white-space: nowrap;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .primary-button:disabled { cursor: not-allowed; opacity: .58; }
+    .mockup-note { margin: 13px 0 0; color: #8995a5; text-align: center; font-size: 10px; }
+    .validation-message {
+      display: none;
+      margin: 2px 0 16px;
+      padding: 10px 12px;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      color: #a51d24;
+      background: #fff1f1;
+      font-size: 12px;
+    }
+    .validation-message.visible { display: block; }
+    .validation-message ul { margin: 5px 0 0; padding-left: 18px; }
+    .field-invalid { border-color: #dc2626 !important; background: #fff8f8 !important; }
+    .support-option.selected { border-color: #9dbcf2; color: #194faf; background: var(--blue-soft); font-weight: 650; }
+    .section-mode-hint { margin-top: 7px; color: #718198; font-size: 10px; }
+    .input-status { margin-top: 10px; padding: 8px 10px; border-radius: 7px; color: #617188; background: #f0f4f8; font-size: 10px; }
+    .input-status.invalid { color: #a51d24; background: #fff1f1; }
+
+    @media (max-width: 980px) {
+      .app-layout { grid-template-columns: 310px minmax(0,1fr); }
+      .workspace { padding: 20px 17px; }
+      .summary-strip { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    }
+    @media (max-width: 760px) {
+      .topbar { height: 58px; padding: 0 16px; }
+      .topbar-note { display: none; }
+      .app-layout { display: flex; flex-direction: column; }
+      .inputs { padding: 18px 16px 8px; border-right: 0; border-bottom: 1px solid var(--line); }
+      .workspace { padding: 19px 12px 26px; }
+      .result-grid { grid-template-columns: 1fr; }
+      .beam-card { padding: 12px 9px 3px; }
+      .diagram-stack { padding-right: 9px; padding-left: 9px; }
+      .workspace-heading { align-items: flex-start; }
+      .example-badge { font-size: 9px; }
+    }
+    @media (max-width: 410px) {
+      .workspace-heading { display: block; }
+      .example-badge { margin-top: 10px; }
+      .support-options { grid-template-columns: 1fr; }
+      .load-fields.three { grid-template-columns: 1fr 1fr; }
+      .load-fields.three .load-field:last-child { grid-column: 2; }
+      .recommendation { align-items: flex-start; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true">
+          <path d="M4 7h16M6 7l-2 5h4L6 7Zm12 0-2 5h4l-2-5ZM5 16h14M8 16v2m8-2v2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h1>Beam Designer</h1>
+    </div>
+    <span class="topbar-note">Preliminary beam sizing workspace</span>
+  </header>
+
+  <main class="app-layout">
+    <aside class="inputs" aria-label="Beam inputs">
+      <div class="intro">
+        <h2>Design inputs</h2>
+        <p>Set up the beam, loading, and section.</p>
+      </div>
+
+      <section class="panel-section" aria-labelledby="support-heading">
+        <h3 class="section-heading" id="support-heading">Support condition</h3>
+        <div class="support-options">
+          <label class="support-option selected"><input type="radio" name="support" value="simple" checked>Simply supported</label>
+          <label class="support-option"><input type="radio" name="support" value="cantilever">Cantilever</label>
+        </div>
+      </section>
+
+      <section class="panel-section" aria-labelledby="span-heading">
+        <h3 class="section-heading" id="span-heading">Span</h3>
+        <div class="span-controls">
+          <input id="span-slider" type="range" min="4" max="40" step="0.25" value="20" aria-label="Span slider, feet">
+          <div class="input-unit">
+            <input id="span-number" class="number-control" type="number" min="4" max="40" step="0.25" value="20" aria-label="Span, feet" data-numeric="span" required>
+            <span class="unit">ft</span>
+          </div>
+        </div>
+        <div class="hint">4 to 40 ft · adjust with the slider or enter a value</div>
+      </section>
+
+      <section class="panel-section" aria-labelledby="loads-heading">
+        <h3 class="section-heading" id="loads-heading">Loads</h3>
+        <div id="load-list" class="load-list" aria-live="polite"></div>
+        <div class="add-loads">
+          <button type="button" class="secondary-button" id="add-point-load">＋ Point load</button>
+          <button type="button" class="secondary-button" id="add-uniform-load">＋ Uniform load</button>
+        </div>
+        <div class="hint">Loads act downward. Uniform loads extending past the beam end are clipped.</div>
+      </section>
+
+      <section class="panel-section" aria-labelledby="section-heading">
+        <h3 class="section-heading" id="section-heading">Material &amp; section</h3>
+        <div class="select-row">
+          <div class="load-field">
+            <label for="material">Material</label>
+            <select class="select-control" id="material">
+              <option value="steel">Steel</option>
+              <option value="wood">Wood</option>
+              <option value="concrete">Concrete</option>
+            </select>
+          </div>
+          <div class="load-field">
+            <label for="section">Section</label>
+            <select class="select-control" id="section"></select>
+          </div>
+        </div>
+        <div class="waste-control">
+          <div class="waste-control-head">
+            <label for="waste-factor">Material waste factor</label>
+            <output class="waste-value" id="waste-value" for="waste-factor">0%</output>
+          </div>
+          <input class="waste-slider" id="waste-factor" type="range" min="0" max="15" step="1" value="0" aria-label="Material waste factor, percent">
+          <div class="range-ends"><span>0%</span><span>15%</span></div>
+        </div>
+        <div class="mode-row" aria-label="Section selection mode">
+          <label><input type="radio" name="section-mode" value="manual" checked>Manual</label>
+          <label><input type="radio" name="section-mode" value="auto">Recommend a section</label>
+        </div>
+        <div class="section-mode-hint" id="section-mode-hint">Manual section selected.</div>
+      </section>
+
+      <section class="panel-section" aria-labelledby="limit-heading">
+        <h3 class="section-heading" id="limit-heading">Deflection limit</h3>
+        <div class="load-field limit-control">
+          <label for="limit">Allowable ratio</label>
+          <select class="select-control" id="limit">
+          <option value="360">L/360</option>
+          <option value="240">L/240</option>
+          </select>
+        </div>
+      </section>
+      <div id="validation-message" class="validation-message" role="alert" aria-live="assertive"></div>
+      <div id="input-status" class="input-status" role="status">Inputs valid. Results are illustrative placeholders in this stage.</div>
+    </aside>
+
+    <section class="workspace" aria-label="Beam results">
+      <div class="workspace-heading">
+        <div>
+          <h2>Beam response</h2>
+          <p>Analysis overview for the current design inputs.</p>
+        </div>
+        <span class="example-badge"><span aria-hidden="true">●</span> Example design</span>
+      </div>
+
+      <section class="surface-card beam-card" aria-labelledby="beam-title">
+        <h3 class="card-label" id="beam-title">Beam &amp; applied loads</h3>
+        <svg viewBox="0 0 900 166" role="img" aria-label="Simply supported 20 foot beam with a full-span uniform load">
+          <defs>
+            <marker id="load-arrow" markerWidth="8" markerHeight="8" refX="4" refY="6" orient="auto">
+              <path d="M0 0 L4 6 L8 0 Z" fill="#3977d4"/>
+            </marker>
+            <marker id="reaction-arrow" markerWidth="8" markerHeight="8" refX="4" refY="2" orient="auto">
+              <path d="M0 8 L4 2 L8 8 Z" fill="#25945e"/>
+            </marker>
+          </defs>
+          <g font-family="system-ui, sans-serif">
+            <g stroke="#3977d4" stroke-width="1.5" marker-end="url(#load-arrow)">
+              <line x1="120" y1="31" x2="120" y2="73"/><line x1="164" y1="31" x2="164" y2="73"/>
+              <line x1="208" y1="31" x2="208" y2="73"/><line x1="252" y1="31" x2="252" y2="73"/>
+              <line x1="296" y1="31" x2="296" y2="73"/><line x1="340" y1="31" x2="340" y2="73"/>
+              <line x1="384" y1="31" x2="384" y2="73"/><line x1="428" y1="31" x2="428" y2="73"/>
+              <line x1="472" y1="31" x2="472" y2="73"/><line x1="516" y1="31" x2="516" y2="73"/>
+              <line x1="560" y1="31" x2="560" y2="73"/><line x1="604" y1="31" x2="604" y2="73"/>
+              <line x1="648" y1="31" x2="648" y2="73"/><line x1="692" y1="31" x2="692" y2="73"/>
+              <line x1="736" y1="31" x2="736" y2="73"/><line x1="780" y1="31" x2="780" y2="73"/>
+            </g>
+            <text x="450" y="21" text-anchor="middle" fill="#4a5b71" font-size="12">1.00 k/ft uniform load · downward</text>
+            <line x1="120" y1="82" x2="780" y2="82" stroke="#64748b" stroke-width="12" stroke-linecap="round"/>
+            <path d="M102 98 L120 86 L138 98 Z" fill="#aab6c5"/>
+            <path d="M762 98 L780 86 L798 98 Z" fill="#aab6c5"/>
+            <line x1="95" y1="101" x2="145" y2="101" stroke="#8391a3" stroke-width="2"/>
+            <line x1="755" y1="101" x2="805" y2="101" stroke="#8391a3" stroke-width="2"/>
+            <line x1="120" y1="128" x2="120" y2="106" stroke="#25945e" stroke-width="1.8" marker-end="url(#reaction-arrow)"/>
+            <line x1="780" y1="128" x2="780" y2="106" stroke="#25945e" stroke-width="1.8" marker-end="url(#reaction-arrow)"/>
+            <text x="120" y="143" text-anchor="middle" fill="#506176" font-size="11">10.00 k</text>
+            <text x="780" y="143" text-anchor="middle" fill="#506176" font-size="11">10.00 k</text>
+            <line x1="120" y1="154" x2="780" y2="154" stroke="#b8c4d2"/>
+            <line x1="120" y1="150" x2="120" y2="158" stroke="#b8c4d2"/>
+            <line x1="780" y1="150" x2="780" y2="158" stroke="#b8c4d2"/>
+            <text x="450" y="165" text-anchor="middle" fill="#7b8797" font-size="10">20.00 ft</text>
+          </g>
+        </svg>
+      </section>
+
+      <div class="summary-strip" aria-label="Key results">
+        <article class="surface-card summary-item">
+          <div class="label">Maximum shear</div><div class="value">10.00 <span class="unit">k</span></div>
+        </article>
+        <article class="surface-card summary-item">
+          <div class="label">Maximum moment</div><div class="value">50.00 <span class="unit">kip-ft</span></div>
+        </article>
+        <article class="surface-card summary-item">
+          <div class="label">Peak bending stress</div><div class="value">17.96 <span class="unit">ksi</span></div>
+        </article>
+        <article class="surface-card summary-item">
+          <div class="label">Maximum deflection</div><div class="value">0.61 <span class="unit">in</span></div>
+        </article>
+      </div>
+
+      <section class="surface-card diagram-stack" aria-label="Beam diagrams">
+        <h3 class="card-label">Response diagrams <span style="font-weight:500;letter-spacing:0;text-transform:none;">· shared span scale</span></h3>
+        <div class="diagram">
+          <svg viewBox="0 0 900 132" role="img" aria-label="Placeholder shear force diagram, maximum 10.00 kips at the left support">
+            <text x="8" y="22" fill="#34445a" font-size="12" font-weight="650">Shear force <tspan fill="#7b8797" font-weight="400">(k)</tspan></text>
+            <line x1="120" y1="76" x2="780" y2="76" stroke="#d4dce6"/>
+            <path d="M120 43 L780 109 L780 76 L120 76 Z" fill="#75a6ed" fill-opacity=".2"/>
+            <path d="M120 43 L780 109" fill="none" stroke="#3678d4" stroke-width="2"/>
+            <circle cx="120" cy="43" r="3.5" fill="#3678d4"/>
+            <text x="129" y="39" fill="#46566c" font-size="10">10.00 k</text>
+            <text x="780" y="122" text-anchor="end" fill="#748196" font-size="10">−10.00 k</text>
+            <text x="120" y="126" text-anchor="middle" fill="#8a96a5" font-size="9">0 ft</text>
+            <text x="780" y="126" text-anchor="middle" fill="#8a96a5" font-size="9">20 ft</text>
+          </svg>
+        </div>
+        <div class="diagram">
+          <svg viewBox="0 0 900 132" role="img" aria-label="Placeholder bending moment diagram, maximum 50.00 kip-feet at midspan">
+            <text x="8" y="22" fill="#34445a" font-size="12" font-weight="650">Bending moment <tspan fill="#7b8797" font-weight="400">(kip-ft)</tspan></text>
+            <line x1="120" y1="38" x2="780" y2="38" stroke="#d4dce6"/>
+            <path d="M120 38 Q450 118 780 38 L780 38 L120 38 Z" fill="#75a6ed" fill-opacity=".2"/>
+            <path d="M120 38 Q450 118 780 38" fill="none" stroke="#3678d4" stroke-width="2"/>
+            <circle cx="450" cy="78" r="3.5" fill="#3678d4"/>
+            <text x="450" y="70" text-anchor="middle" fill="#46566c" font-size="10">50.00 kip-ft</text>
+            <text x="120" y="126" text-anchor="middle" fill="#8a96a5" font-size="9">0 ft</text>
+            <text x="450" y="126" text-anchor="middle" fill="#8a96a5" font-size="9">10 ft</text>
+            <text x="780" y="126" text-anchor="middle" fill="#8a96a5" font-size="9">20 ft</text>
+          </svg>
+        </div>
+        <div class="diagram">
+          <svg viewBox="0 0 900 132" role="img" aria-label="Placeholder deflection diagram, maximum 0.61 inches at midspan">
+            <text x="8" y="22" fill="#34445a" font-size="12" font-weight="650">Deflected shape <tspan fill="#7b8797" font-weight="400">(in)</tspan></text>
+            <line x1="120" y1="38" x2="780" y2="38" stroke="#d4dce6" stroke-dasharray="4 4"/>
+            <path d="M120 38 Q450 108 780 38" fill="none" stroke="#3678d4" stroke-width="2.5"/>
+            <circle cx="450" cy="73" r="3.5" fill="#3678d4"/>
+            <text x="450" y="65" text-anchor="middle" fill="#46566c" font-size="10">0.61 in</text>
+            <text x="120" y="126" text-anchor="middle" fill="#8a96a5" font-size="9">0 ft</text>
+            <text x="450" y="126" text-anchor="middle" fill="#8a96a5" font-size="9">10 ft</text>
+            <text x="780" y="126" text-anchor="middle" fill="#8a96a5" font-size="9">20 ft</text>
+          </svg>
+        </div>
+      </section>
+
+      <div class="result-grid" style="margin-top:13px;">
+        <article class="surface-card check-card">
+          <div class="check-head"><h3>Bending check</h3><span class="pass-badge">PASS</span></div>
+          <p class="check-equation">fb = |Mmax| × 12 / Sx</p>
+          <div class="check-values"><span>Actual <strong>17.96 ksi</strong></span><span>Allowable <strong>30.00 ksi</strong></span></div>
+          <div class="meter" aria-label="Bending ratio 59.87 percent"><div class="meter-fill"></div></div>
+          <div class="hint">59.87% of allowable bending stress</div>
+        </article>
+        <article class="surface-card check-card">
+          <div class="check-head"><h3>Deflection check</h3><span class="pass-badge">PASS</span></div>
+          <p class="check-equation">Allowable = span / 360</p>
+          <div class="check-values"><span>Actual <strong>0.61 in</strong></span><span>Allowable <strong>0.67 in</strong></span></div>
+          <div class="meter" aria-label="Deflection ratio 91.30 percent"><div class="meter-fill deflection-fill"></div></div>
+          <div class="hint">91.30% of allowable deflection</div>
+        </article>
+      </div>
+
+      <section class="recommendation" aria-label="Section recommendation">
+        <div class="recommendation-copy">
+          <div class="eyebrow">Suggested section</div>
+          <strong>Lightest passing steel section: W12x26</strong>
+          <span>Illustrative recommendation · 26 lb/ft · both checks pass</span>
+        </div>
+        <button type="button" class="primary-button" disabled aria-label="Section recommendation will be available after analysis is implemented">Use this section</button>
+      </section>
+
+      <p class="mockup-note" id="result-note" aria-live="polite">Stage 2 input controls are active. Engineering results and plots remain illustrative placeholders.</p>
+    </section>
+  </main>
+  <script>
+    const sectionNames = {
+      steel: ["W8x10", "W10x12", "W12x26", "W14x22", "W16x26", "W18x35", "W21x44", "W24x55"],
+      wood: ["2x8", "2x10", "2x12"],
+      concrete: ["6x12", "8x12", "10x12"]
+    };
+    const defaultSections = { steel: "W12x26", wood: "2x10", concrete: "6x12" };
+    const design = {
+      support: "simple",
+      span: 20,
+      material: "steel",
+      section: "W12x26",
+      sectionMode: "manual",
+      wasteFactor: 0,
+      loads: [{ id: 1, type: "uniform", magnitude: "1.00", start: "0.00", end: "20.00" }]
+    };
+    let nextLoadId = 2;
+
+    const byId = id => document.getElementById(id);
+    const spanSlider = byId("span-slider");
+    const spanNumber = byId("span-number");
+    const loadList = byId("load-list");
+
+    function formatInputValue(value) {
+      return Number.isFinite(Number(value)) ? Number(value).toFixed(2) : "";
+    }
+
+    function createLoadField(load, field, labelText, unit, step, coordinate = false) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "load-field";
+
+      const label = document.createElement("label");
+      const inputId = `load-${load.id}-${field}`;
+      label.htmlFor = inputId;
+      label.textContent = labelText;
+
+      const inputUnit = document.createElement("div");
+      inputUnit.className = "input-unit";
+
+      const input = document.createElement("input");
+      input.id = inputId;
+      input.className = "number-control";
+      input.type = "number";
+      input.required = true;
+      input.value = load[field] === "" ? "" : formatInputValue(load[field]);
+      input.dataset.loadId = String(load.id);
+      input.dataset.field = field;
+      input.dataset.numeric = coordinate ? "coordinate" : "magnitude";
+      input.step = coordinate ? "any" : step;
+      input.min = coordinate ? "0" : "0.01";
+      if (field === "position") input.max = String(design.span);
+
+      const unitLabel = document.createElement("span");
+      unitLabel.className = "unit";
+      unitLabel.textContent = unit;
+
+      inputUnit.append(input, unitLabel);
+      wrapper.append(label, inputUnit);
+      return wrapper;
+    }
+
+    function renderLoadCards() {
+      loadList.replaceChildren();
+      if (design.loads.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "hint";
+        empty.textContent = "No loads added. A zero-load design is allowed.";
+        loadList.append(empty);
+        return;
+      }
+
+      design.loads.forEach(load => {
+        const card = document.createElement("article");
+        card.className = "load-card";
+
+        const header = document.createElement("div");
+        header.className = "load-card-head";
+
+        const title = document.createElement("div");
+        title.className = "load-name";
+        title.textContent = load.type === "point" ? "Point load" : "Uniform load";
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "icon-button";
+        remove.dataset.removeLoad = String(load.id);
+        remove.setAttribute("aria-label", `Remove ${load.type} load`);
+        remove.textContent = "×";
+        header.append(title, remove);
+
+        const fields = document.createElement("div");
+        fields.className = load.type === "point" ? "load-fields" : "load-fields three";
+        fields.append(createLoadField(load, "magnitude", "Magnitude", load.type === "point" ? "k" : "k/ft", "0.01"));
+        if (load.type === "point") {
+          fields.append(createLoadField(load, "position", "Position", "ft", "any", true));
+        } else {
+          fields.append(createLoadField(load, "start", "Start", "ft", "any", true));
+          fields.append(createLoadField(load, "end", "End", "ft", "any", true));
+        }
+        card.append(header, fields);
+        loadList.append(card);
+      });
+    }
+
+    function renderSectionOptions(preferredSection) {
+      const select = byId("section");
+      select.replaceChildren();
+      sectionNames[design.material].forEach(name => {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        select.append(option);
+      });
+
+      const validPreferred = sectionNames[design.material].includes(preferredSection);
+      design.section = validPreferred ? preferredSection : defaultSections[design.material];
+      select.value = design.section;
+    }
+
+    function updateSectionMode() {
+      const automatic = design.sectionMode === "auto";
+      byId("section").disabled = automatic;
+      byId("section-mode-hint").textContent = automatic
+        ? "Automatic section recommendations will be calculated in a later stage; the current section remains selected."
+        : "Manual section selected.";
+    }
+
+    function updatePointPositionLimits() {
+      design.span = spanNumber.value === "" ? NaN : Number(spanNumber.value);
+      document.querySelectorAll('[data-numeric="coordinate"][data-field="position"]').forEach(input => {
+        if (Number.isFinite(design.span) && design.span >= 4 && design.span <= 40) input.max = String(design.span);
+        else input.removeAttribute("max");
+      });
+    }
+
+    function validateInputs() {
+      const errors = [];
+      const invalidFields = new Set();
+      const spanValue = spanNumber.value.trim() === "" ? NaN : Number(spanNumber.value);
+      design.span = spanValue;
+
+      document.querySelectorAll("[data-numeric]").forEach(input => {
+        input.classList.remove("field-invalid");
+        input.removeAttribute("aria-invalid");
+
+        const value = input.value.trim() === "" ? NaN : Number(input.value);
+        const kind = input.dataset.numeric;
+        let message = "";
+
+        if (!Number.isFinite(value)) {
+          message = `${input.labels[0]?.textContent || "This"} value is required and must be numeric.`;
+        } else if (kind === "span" && (value < 4 || value > 40)) {
+          message = "Span must be between 4 and 40 ft.";
+        } else if (kind === "span" && input.validity.stepMismatch) {
+          message = "Span must use 0.25 ft increments.";
+        } else if (kind === "magnitude" && value <= 0) {
+          message = "Load magnitude must be greater than zero.";
+        } else if (kind === "magnitude" && input.validity.stepMismatch) {
+          message = "Load magnitude must use 0.01 increments.";
+        } else if (kind === "coordinate" && value < 0) {
+          message = "Load positions cannot be negative.";
+        } else if (kind === "coordinate" && input.dataset.field === "position" &&
+                   Number.isFinite(spanValue) && value > spanValue) {
+          message = "Point load position must be within the beam span.";
+        }
+
+        if (message) {
+          errors.push(message);
+          invalidFields.add(input);
+        }
+      });
+
+      design.loads.filter(load => load.type === "uniform").forEach(load => {
+        const start = Number(load.start);
+        const end = Number(load.end);
+        if (Number.isFinite(start) && Number.isFinite(end) && start >= end) {
+          errors.push("Uniform load end must be greater than its start.");
+          const startInput = byId(`load-${load.id}-start`);
+          const endInput = byId(`load-${load.id}-end`);
+          if (startInput) invalidFields.add(startInput);
+          if (endInput) invalidFields.add(endInput);
+        }
+      });
+
+      invalidFields.forEach(input => {
+        input.classList.add("field-invalid");
+        input.setAttribute("aria-invalid", "true");
+      });
+      return [...new Set(errors)];
+    }
+
+    function renderInputValidation() {
+      const errors = validateInputs();
+      const message = byId("validation-message");
+      const status = byId("input-status");
+      const resultNote = byId("result-note");
+
+      if (errors.length > 0) {
+        message.replaceChildren();
+        const intro = document.createElement("strong");
+        intro.textContent = "Please correct these inputs:";
+        const list = document.createElement("ul");
+        errors.forEach(error => {
+          const item = document.createElement("li");
+          item.textContent = error;
+          list.append(item);
+        });
+        message.append(intro, list);
+        message.classList.add("visible");
+        status.classList.add("invalid");
+        status.textContent = "Invalid inputs. Results below are placeholders only.";
+        resultNote.textContent = "Input errors are shown in the left panel. Results and plots are static placeholders in this stage.";
+        return;
+      }
+
+      message.replaceChildren();
+      message.classList.remove("visible");
+      status.classList.remove("invalid");
+      status.textContent = design.loads.length === 0
+        ? `Inputs valid. No loads are applied; displayed results remain placeholders. Waste factor: ${design.wasteFactor}%.`
+        : `Inputs valid. Waste factor: ${design.wasteFactor}%. Structural results are illustrative placeholders.`;
+      resultNote.textContent = `Waste factor is ${design.wasteFactor}%; structural result cards and plots remain illustrative placeholders.`;
+    }
+
+    function handleInputChange(event) {
+      const input = event.target;
+      if (input.matches("[data-load-id][data-field]")) {
+        const load = design.loads.find(item => item.id === Number(input.dataset.loadId));
+        if (load) load[input.dataset.field] = input.value.trim() === "" ? "" : Number(input.value);
+      }
+      if (input === spanNumber) {
+        const value = spanNumber.value.trim() === "" ? NaN : Number(spanNumber.value);
+        if (Number.isFinite(value) && value >= 4 && value <= 40 && !spanNumber.validity.stepMismatch) {
+          spanSlider.value = String(value);
+        }
+        updatePointPositionLimits();
+      }
+      renderInputValidation();
+    }
+
+    function updateSupportSelection() {
+      design.support = document.querySelector('input[name="support"]:checked').value;
+      document.querySelectorAll(".support-option").forEach(label => {
+        label.classList.toggle("selected", label.querySelector("input").checked);
+      });
+    }
+
+    function defaultPointLoadPosition() {
+      if (!Number.isFinite(design.span)) return "";
+      return design.support === "cantilever" ? design.span : design.span / 2;
+    }
+
+    function addLoad(type) {
+      const load = type === "point"
+        ? { id: nextLoadId++, type, magnitude: "1.00", position: defaultPointLoadPosition() }
+        : { id: nextLoadId++, type, magnitude: "1.00", start: "0.00", end: Number.isFinite(design.span) ? design.span : 20 };
+      design.loads.push(load);
+      renderLoadCards();
+      updatePointPositionLimits();
+      renderInputValidation();
+    }
+
+    function updateMaterial() {
+      const priorSection = design.section;
+      design.material = byId("material").value;
+      renderSectionOptions(priorSection);
+      renderInputValidation();
+    }
+
+    function updateSelectionMode() {
+      design.sectionMode = document.querySelector('input[name="section-mode"]:checked').value;
+      updateSectionMode();
+    }
+
+    spanSlider.addEventListener("input", () => {
+      spanNumber.value = spanSlider.value;
+      updatePointPositionLimits();
+      renderInputValidation();
+    });
+    spanNumber.addEventListener("input", handleInputChange);
+    spanNumber.addEventListener("change", handleInputChange);
+    loadList.addEventListener("input", handleInputChange);
+    loadList.addEventListener("change", handleInputChange);
+
+    document.querySelectorAll('input[name="support"]').forEach(input => {
+      input.addEventListener("change", updateSupportSelection);
+    });
+    document.querySelectorAll('input[name="section-mode"]').forEach(input => {
+      input.addEventListener("change", updateSelectionMode);
+    });
+    byId("add-point-load").addEventListener("click", () => addLoad("point"));
+    byId("add-uniform-load").addEventListener("click", () => addLoad("uniform"));
+    loadList.addEventListener("click", event => {
+      const button = event.target.closest("[data-remove-load]");
+      if (!button) return;
+      design.loads = design.loads.filter(load => load.id !== Number(button.dataset.removeLoad));
+      renderLoadCards();
+      renderInputValidation();
+    });
+    byId("material").addEventListener("change", updateMaterial);
+    byId("waste-factor").addEventListener("input", () => {
+      design.wasteFactor = Number(byId("waste-factor").value);
+      byId("waste-value").value = `${design.wasteFactor}%`;
+      renderInputValidation();
+    });
+    byId("section").addEventListener("change", () => {
+      design.section = byId("section").value;
+      renderInputValidation();
+    });
+    byId("limit").addEventListener("change", renderInputValidation);
+
+    renderLoadCards();
+    renderSectionOptions("W12x26");
+    updateSectionMode();
+    updatePointPositionLimits();
+    renderInputValidation();
+  </script>
+</body>
+</html>
