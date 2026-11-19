@@ -25,6 +25,11 @@ sizing a floor beam or deck joist.
   - "Load Preset" sets the span to 20 ft and the material/section to steel
     W12x26, keeps the current support condition and all existing loads, and
     appends a 1 kip/ft uniform load from 0 to 20 ft.
+  - "Reset" clears the span and all loads, resets the waste factor to 0%, and
+    clears validation messages and invalid-field styling. It keeps the current
+    support, material, section, section mode, and deflection-limit choices.
+    The span number is left blank and its slider moves to its 4 ft minimum.
+    Validation resumes on the next input change.
   - "Add point load" and "Add uniform load" buttons.
   - Point loads can also be dragged along the beam in the drawing,
     snapping to 0.25 ft.
@@ -128,6 +133,8 @@ sizing a floor beam or deck joist.
   right. On a phone, the panels stack.
 - Show the "Load Preset" action as a compact, blue-outlined button below the
   design-input introduction.
+- Place a matching "Reset" button beside "Load Preset". After reset, replace
+  the illustrative output with a neutral empty state prompting for beam inputs.
 - Every input has a short label with units. Hovering over a check card
   explains the formula used.
 

@@ -184,11 +184,25 @@
       font-size: 11px;
       font-weight: 600;
     }
-    .preset-button {
-      flex: 0 0 auto;
-      margin: -8px 0 18px;
+    .input-actions { display: flex; gap: 7px; margin: -8px 0 18px; }
+    .input-actions .secondary-button {
+      flex: 1;
       padding: 8px 12px;
     }
+    .results-empty-state {
+      display: grid;
+      min-height: 320px;
+      place-content: center;
+      gap: 7px;
+      padding: 24px;
+      border: 1px dashed #cbd8e8;
+      border-radius: 10px;
+      color: #64748b;
+      background: #fff;
+      text-align: center;
+    }
+    .results-empty-state strong { color: #34445a; font-size: 15px; }
+    .results-empty-state[hidden] { display: none; }
 
     .select-row { display: grid; grid-template-columns: 1fr 1.1fr; gap: 8px; }
     .mode-row { display: flex; gap: 16px; margin-top: 10px; }
@@ -365,7 +379,10 @@
         <h2>Design inputs</h2>
         <p>Set up the beam, loading, and section.</p>
       </div>
-      <button type="button" class="secondary-button preset-button" id="load-preset">Load Preset</button>
+      <div class="input-actions">
+        <button type="button" class="secondary-button" id="load-preset">Load Preset</button>
+        <button type="button" class="secondary-button" id="reset-design">Reset</button>
+      </div>
 
       <section class="panel-section" aria-labelledby="support-heading">
         <h3 class="section-heading" id="support-heading">Support condition</h3>
@@ -443,6 +460,7 @@
     </aside>
 
     <section class="workspace" aria-label="Beam results">
+      <div id="results-content">
       <div class="workspace-heading">
         <div>
           <h2>Beam response</h2>
@@ -575,6 +593,11 @@
       </section>
 
       <p class="mockup-note" id="result-note" aria-live="polite">Stage 2 input controls are active. Engineering results and plots remain illustrative placeholders.</p>
+      </div>
+      <div id="results-empty-state" class="results-empty-state" role="status" aria-live="polite" hidden>
+        <strong>Results cleared</strong>
+        <span>Enter beam inputs to see results.</span>
+      </div>
     </section>
   </main>
   <script>
@@ -851,6 +874,31 @@
       addLoad("uniform");
     }
 
+    function resetDesign() {
+      design.loads = [];
+      design.wasteFactor = 0;
+      spanNumber.value = "";
+      spanSlider.value = spanSlider.min;
+      byId("waste-factor").value = "0";
+      byId("waste-value").value = "0%";
+
+      renderLoadCards();
+      updatePointPositionLimits();
+      document.querySelectorAll("[data-numeric]").forEach(input => {
+        input.classList.remove("field-invalid");
+        input.removeAttribute("aria-invalid");
+      });
+
+      const message = byId("validation-message");
+      message.replaceChildren();
+      message.classList.remove("visible");
+      const status = byId("input-status");
+      status.classList.remove("invalid");
+      status.textContent = "Inputs cleared. Enter a span and add loads to start a new design.";
+      byId("results-content").hidden = true;
+      byId("results-empty-state").hidden = false;
+    }
+
     function updateMaterial() {
       const priorSection = design.section;
       design.material = byId("material").value;
@@ -882,6 +930,7 @@
     byId("add-point-load").addEventListener("click", () => addLoad("point"));
     byId("add-uniform-load").addEventListener("click", () => addLoad("uniform"));
     byId("load-preset").addEventListener("click", loadPreset);
+    byId("reset-design").addEventListener("click", resetDesign);
     loadList.addEventListener("click", event => {
       const button = event.target.closest("[data-remove-load]");
       if (!button) return;
