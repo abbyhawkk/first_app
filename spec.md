@@ -22,6 +22,9 @@ sizing a floor beam or deck joist.
   - Point loads: magnitude (kips, downward positive) and position (ft).
     A new point load starts at midspan (at the free end of a cantilever).
   - Uniform loads: magnitude (kips/ft) and start and end positions (ft).
+  - "Load Preset" sets the span to 20 ft and the material/section to steel
+    W12x26, keeps the current support condition and all existing loads, and
+    appends a 1 kip/ft uniform load from 0 to 20 ft.
   - "Add point load" and "Add uniform load" buttons.
   - Point loads can also be dragged along the beam in the drawing,
     snapping to 0.25 ft.
@@ -123,6 +126,8 @@ sizing a floor beam or deck joist.
   system font, generous spacing. No clutter.
 - Inputs in a panel on the left; drawing, diagrams, and checks on the
   right. On a phone, the panels stack.
+- Show the "Load Preset" action as a compact, blue-outlined button below the
+  design-input introduction.
 - Every input has a short label with units. Hovering over a check card
   explains the formula used.
 

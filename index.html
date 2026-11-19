@@ -184,6 +184,11 @@
       font-size: 11px;
       font-weight: 600;
     }
+    .preset-button {
+      flex: 0 0 auto;
+      margin: -8px 0 18px;
+      padding: 8px 12px;
+    }
 
     .select-row { display: grid; grid-template-columns: 1fr 1.1fr; gap: 8px; }
     .mode-row { display: flex; gap: 16px; margin-top: 10px; }
@@ -360,6 +365,7 @@
         <h2>Design inputs</h2>
         <p>Set up the beam, loading, and section.</p>
       </div>
+      <button type="button" class="secondary-button preset-button" id="load-preset">Load Preset</button>
 
       <section class="panel-section" aria-labelledby="support-heading">
         <h3 class="section-heading" id="support-heading">Support condition</h3>
@@ -833,6 +839,18 @@
       renderInputValidation();
     }
 
+    function loadPreset() {
+      spanNumber.value = "20";
+      spanSlider.value = "20";
+      updatePointPositionLimits();
+
+      design.material = "steel";
+      byId("material").value = design.material;
+      renderSectionOptions("W12x26");
+
+      addLoad("uniform");
+    }
+
     function updateMaterial() {
       const priorSection = design.section;
       design.material = byId("material").value;
@@ -863,6 +881,7 @@
     });
     byId("add-point-load").addEventListener("click", () => addLoad("point"));
     byId("add-uniform-load").addEventListener("click", () => addLoad("uniform"));
+    byId("load-preset").addEventListener("click", loadPreset);
     loadList.addEventListener("click", event => {
       const button = event.target.closest("[data-remove-load]");
       if (!button) return;
